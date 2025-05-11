@@ -44,14 +44,14 @@ const processChat = async (session_id, message) => {
   let retrievedContexts;
   try {
     retrievedContexts = await searchQdrant(queryVector);
-    console.log(`Retrieved contexts in ${Date.now() - retrieveStart}ms:`, retrievedContexts);
+    console.log(`Retrieved contexts in ${Date.now() - retrieveStart}ms:`); // retrievedContexts
     if (retrievedContexts && retrievedContexts.length > 0) {
       context = retrievedContexts.map((ctx) => ctx.payload.maintext).join(' ');
     }
   } catch (qdrantError) {
     console.error('Failed to retrieve contexts from Qdrant:', qdrantError.message);
   }
-  console.log('Final context for Gemini:', context);
+//   console.log('Final context for Gemini:', context);
 
   // Call Gemini API
   const geminiStart = Date.now();
@@ -61,7 +61,7 @@ const processChat = async (session_id, message) => {
 
   // Fetch existing chat history from Redis
   const historyKey = `chat_history:${session_id}`;
-  console.log('Fetching history from Redis with key:', historyKey);
+//   console.log('Fetching history from Redis with key:', historyKey);
   let chatHistory = [];
   try {
     const rawHistory = await redisClient.get(historyKey);
@@ -117,7 +117,7 @@ const getChatHistory = async (session_id) => {
     },
   ]);
 
-  console.log('Transformed messages for frontend:', messages);
+//   console.log('Transformed messages for frontend:', messages);
   return messages;
 };
 

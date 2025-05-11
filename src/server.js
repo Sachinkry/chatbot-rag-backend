@@ -73,7 +73,9 @@ app.post('/reset', async (req, res, next) => {
 
 // Health check
 app.get('/health', (req, res) => {
-  const redis = require('./src/redis');
+  // const redis = require('./src/redis');
+  const redis = require('./redis'); // ✅ CORRECT
+
   res.json({
     status: 'ok',
     redis: redis.redisClient.isOpen ? 'connected' : 'disconnected',
