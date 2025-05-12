@@ -2,16 +2,6 @@
 
 This backend powers a full-stack chatbot that answers user queries using Retrieval-Augmented Generation (RAG) over a recent news corpus.
 
-## Tech Stack
-
-- **Backend**: `Node.js (Express)`
-- **Embeddings**: Jina Embeddings (`jina-clip-v2`)
-- **Vector DB**: Qdrant Cloud
-- **LLM API**: `gemini-2.0-flash`
-- **Session Storage & caching**: Redis Cloud
-- **Storage**: [yet to set up]
-- **Frontend URL**: React + tailwind
-
 ## Features
 
 - Searches qdrant db with the embedded query
@@ -68,14 +58,3 @@ To avoid redundant embedding calls to the Jina API, the system can cache embeddi
 
 - **Key Format**: `embedding:<query_text>`
 - **Value**: JSON-encoded array of floats (the embedding vector). Example: `[0.023, -0.045, ..., 0.312]`
-
-### 3. Design Justifications
-
-| Component      | Rationale                                                            |
-| -------------- | -------------------------------------------------------------------- |
-| **Redis**      | Fast, memory-efficient, TTL-enabled cache for chat data              |
-| **Qdrant**     | Easy to store embeddings and use API                                 |
-| **Jina**       | Free-tier embedding service with solid quality                       |
-| **Gemini API** | Lightweight, fast LLM with free tier; avoids OpenAI cost constraints |
-| **Express**    | Familiar, performant for REST services                               |
-| **Frontend**   | React + tailwind: Fast setup with `bolt.new`                         |
