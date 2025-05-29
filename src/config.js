@@ -6,27 +6,40 @@ dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
 // Validate critical environment variables
 const requiredEnvVars = [
-  'REDIS_URL',
-  'JINA_API_KEY',
-  'QDRANT_API_KEY',
-  'QDRANT_HOST',
-  'GEMINI_API_KEY',
+    'JINA_EMBEDDING_API_KEY',
+    'GEMINI_API_KEY',
+    'QDRANT_API_KEY',
+    'QDRANT_URL',
+    'REDIS_HOST',
+    'REDIS_PORT',
+    'PORT'
 ];
 
 requiredEnvVars.forEach((varName) => {
-  if (!process.env[varName]) {
-    console.error(`Missing required environment variable: ${varName}`);
-    process.exit(1);
-  }
+    if (!process.env[varName]) {
+        console.error(`Missing required environment variable: ${varName}`);
+        process.exit(1);
+    }
 });
 
 // Export the config for use in other files
 module.exports = {
-  REDIS_URL: process.env.REDIS_URL,
-  JINA_API_KEY: process.env.JINA_API_KEY,
-  QDRANT_API_KEY: process.env.QDRANT_API_KEY,
-  QDRANT_HOST: process.env.QDRANT_HOST,
-  GEMINI_API_KEY: process.env.GEMINI_API_KEY,
-  PORT: process.env.PORT || 3000,
-  FRONTEND_URL: process.env.FRONTEND_URL || 'http://localhost:5173',
+    jina: {
+        apiKey: process.env.JINA_EMBEDDING_API_KEY
+    },
+    gemini: {
+        apiKey: process.env.GEMINI_API_KEY,
+        model: process.env.GEMINI_MODEL || 'gemini-pro'
+    },
+    qdrant: {
+        url: process.env.QDRANT_URL,
+        apiKey: process.env.QDRANT_API_KEY,
+        collection: process.env.QDRANT_COLLECTION || 'default'
+    },
+    redis: {
+        host: process.env.REDIS_HOST,
+        port: parseInt(process.env.REDIS_PORT),
+        password: process.env.REDIS_PASSWORD || undefined
+    },
+    port: process.env.PORT || 3000
 };
