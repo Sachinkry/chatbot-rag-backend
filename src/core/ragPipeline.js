@@ -2,6 +2,7 @@ const { embeddingService } = require('../services/embeddingService');
 const { generationService } = require('../services/generationService');
 const { qdrantService } = require('../services/qdrantService');
 const { cacheService } = require('../services/cache');
+const { chatService } = require('../services/chatService');
 
 class RAGPipeline {
     constructor() {
@@ -9,6 +10,7 @@ class RAGPipeline {
         this.generationService = generationService;
         this.qdrantService = qdrantService;
         this.cacheService = cacheService;
+        this.chatService = chatService;
     }
 
     async processQuery(query, sessionId) {
@@ -24,7 +26,7 @@ class RAGPipeline {
             }
 
             // Get chat history
-            const chatHistory = await this.cacheService.getChatHistory(sessionId) || [];
+            const chatHistory = await this.chatService.getChatHistory(sessionId) || [];
             // console.log('Chat history:', chatHistory);
 
             // Create embedding
@@ -43,17 +45,13 @@ class RAGPipeline {
             });
             console.log('Gemini response:', response);
 
-            // Cache the response
-            await this.cacheService.set(query, response);
-            // console.log('Cached response for query:', query);
-
-            // Update chat history
-            const userMessage = { role: 'user', content: query };
-            await this.cacheService.addToChatHistory(sessionId, userMessage);
-            
-            const assistantMessage = { role: 'assistant', content: response };
-            await this.cacheService.addToChatHistory(sessionId, assistantMessage);
-            // console.log('Updated chat history for session:', sessionId);
+            const timestamp = new Date().toISOString();
+            await chatService.addToChatHistory(sessionId, {
+                user: query,
+                bot: response,
+                userTimestamp: timestamp,
+                botTimestamp: timestamp
+            });
 
             return response;
         } catch (error) {

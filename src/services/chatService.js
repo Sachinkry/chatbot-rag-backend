@@ -10,9 +10,16 @@ class ChatService {
         return this.formatChatHistory(rawHistory);
     }
 
-    async addToChatHistory(sessionId, messageObject) {
-        // messageObject should have role and content
-        const formattedMessage = this.formatMessage(messageObject);
+    async addToChatHistory(sessionId, userQuery, botResponse) {
+        const timestamp = new Date().toISOString();
+        // Create a single object representing the full turn with timestamps
+        const formattedMessage = {
+            user: userQuery,
+            bot: botResponse,
+            userTimestamp: timestamp,
+            botTimestamp: timestamp
+        };
+        // Pass this single object to redisClient
         await this.client.addToChatHistory(sessionId, formattedMessage);
     }
 
@@ -21,18 +28,20 @@ class ChatService {
         return this.formatChatHistory(rawHistory);
     }
 
+    // This method is now simplified to just format the stored turn object for the API
     formatMessage(messageObject) {
-        const timestamp = new Date().toISOString();
-        // Return a single object that includes both user and bot parts and their timestamps
-        // This structure is easier to store and retrieve from Redis as one item per turn
+        // Avoid overwriting existing timestamps
+        const now = new Date().toISOString();
         return {
-            user: messageObject.role === 'user' ? messageObject.content : null,
-            bot: messageObject.role === 'assistant' ? messageObject.content : null,
-            userTimestamp: messageObject.role === 'user' ? timestamp : null,
-            botTimestamp: messageObject.role === 'assistant' ? timestamp : null,
+          user: messageObject.user || null,
+          bot: messageObject.bot || null,
+          userTimestamp: messageObject.userTimestamp || now,
+          botTimestamp: messageObject.botTimestamp || now
         };
-    }
+      }
+      
 
+    // formatChatHistory now maps each stored turn object to an array of message objects for the API
     formatChatHistory(rawHistory) {
         // Assuming raw history entries are objects like { user: '...', bot: '...', userTimestamp: '...', botTimestamp: '...' }
         return rawHistory.map((entry) => {
