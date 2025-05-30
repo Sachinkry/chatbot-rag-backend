@@ -4,27 +4,54 @@ This backend powers a full-stack chatbot that answers user queries using Retriev
 
 ## Features
 
-- Searches qdrant db with the embedded query
-- Retrieves top-k contexts via semantic search
-- Calls Gemini for final response generation
-- Stores and retrieves session-based chat history from Redis
-- Supports:
-  - `POST /chat`: process user query
-  - `GET /history?session_id=...`: fetch session history
-  - `POST /reset`: clear session history
-  - `GET /health`: check backend + Redis status
+- Semantic search using Qdrant vector database
+- Context retrieval and response generation with Gemini
+- Redis-based chat history with pagination support
+- Comprehensive health monitoring and metrics
+- Robust error handling and retry mechanisms
 
-## Code Structure:
+## API Endpoints
 
-- `src/config.js`: Loads and validates environment variables.
-- `src/middleware.js`: Logging and error-handling middleware.
-- `src/rag.js`: Core RAG pipeline functions (embedQuery, searchQdrant, callGemini).
-- `src/redis.js`: Redis client setup and session management logic.
-- `src/server.js`: Express server setup, API routes, and shutdown.
-- `.env`: environment variables
+- `POST /chat`: Process user query with RAG
+- `GET /history?session_id=...`: Fetch paginated chat history
+- `POST /reset`: Clear session history
+- `GET /health`: System health check
+- `GET /metrics`: Detailed performance metrics
 
-```js
-REDIS_URL=your_redis_url
+## Code Structure
+
+```
+src/
+├── config/           # Configuration management
+├── services/         # Core business logic
+│   ├── redisClient.js    # Redis operations
+│   ├── chatService.js    # Chat history management
+│   └── ragService.js     # RAG pipeline
+├── middleware/       # Express middleware
+├── routes/          # API route handlers
+└── server.js        # Application entry point
+```
+
+## Redis Implementation
+
+### Chat History Storage
+
+- Session-based storage with TTL
+- JSON-formatted messages
+- Pagination support
+- Automatic cleanup of old sessions
+
+### Performance Monitoring
+
+- Operation latency tracking
+- Cache hit/miss statistics
+- Connection health metrics
+- Automatic retry on failures
+
+## Environment Variables
+
+```env
+REDIS_HOST=your_redis_url
 JINA_API_KEY=your_jina_api_key
 QDRANT_API_KEY=your_qdrant_api_key
 QDRANT_HOST=your_qdrant_host:6333
@@ -33,28 +60,32 @@ PORT=3000
 FRONTEND_URL=http://localhost:5173
 ```
 
-## Redis Storage, Session Management & System Design
+## Performance Metrics
 
-### 1. Session-Based Chat Storage
+The system tracks:
 
-Each user session is identified using a `session_id`, passed explicitly from the frontend.
+- Average operation latency
+- Operations per second
+- Cache hit rates
+- Connection status
+- Error rates
 
-- **Key Format**: `chat_history:<session_id>`
-- **Value**: JSON array of message objects:
-  ```json
-  [
-    {
-      "user": "What's the latest on elections?",
-      "bot": "According to Reuters...",
-      "userTimestamp": "2025-05-11T10:00:00Z",
-      "botTimestamp": "2025-05-11T10:00:01Z"
-    }
-  ]
-  ```
+## Error Handling
 
-### 2. Embedding Cache
+- Automatic retry for transient failures
+- Graceful degradation on Redis unavailability
+- Detailed error logging
+- Connection state monitoring
 
-To avoid redundant embedding calls to the Jina API, the system can cache embeddings in Redis per unique query text.
+## Development
 
-- **Key Format**: `embedding:<query_text>`
-- **Value**: JSON-encoded array of floats (the embedding vector). Example: `[0.023, -0.045, ..., 0.312]`
+```bash
+npm install
+npm start
+```
+
+## Testing
+
+```bash
+npm test
+```

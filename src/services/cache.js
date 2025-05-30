@@ -1,54 +1,91 @@
 const { redisClient } = require('./redisClient');
+const { redisKeys } = require('./redisKeys');
 
 class CacheService {
     constructor() {
-        this.client = redisClient;
+        this.redisClient = redisClient;
+        this.cacheTTL = 60 * 60; // Default cache time-to-live in seconds (1 hour)
     }
 
     async get(key) {
-        try {
-            console.log('Getting from cache:', key);
-            const value = await this.client.get(key);
-            console.log('Cache value:', value);
-            return value;
-        } catch (error) {
-            console.error('Cache get error:', error.message);
+        // Use the wrapped get method
+        const cachedData = await this.redisClient.get(key);
+        if (cachedData) {
+            // Assuming cached data is JSON stringified
+            try {
+                // Increment cache hits metrics in redisClient
+                 if (this.redisClient.metrics) this.redisClient.metrics.hits++;
+                return JSON.parse(cachedData);
+            } catch (error) {
+                console.error('Error parsing cached data:', error);
+                return null;
+            }
+        } else {
+            // Increment cache misses metrics in redisClient
+             if (this.redisClient.metrics) this.redisClient.metrics.misses++;
             return null;
         }
     }
 
-    async set(key, value, ttl = 3600) {
+    async set(key, value, ttl = this.cacheTTL) {
+        // Use the wrapped set method
+        // Assuming value is a plain object or can be JSON stringified
         try {
-            console.log('Setting cache:', key);
-            await this.client.set(key, value, 'EX', ttl);
-            console.log('Cache set successfully');
+            const dataToCache = JSON.stringify(value);
+            await this.redisClient.set(key, dataToCache, 'EX', ttl);
         } catch (error) {
-            console.error('Cache set error:', error.message);
+            console.error('Error setting cache data:', error);
         }
     }
 
-    async getChatHistory(sessionId) {
+    async getEmbedding(query) {
         try {
-            console.log('Getting chat history for session:', sessionId);
-            const history = await this.client.get(`chat:${sessionId}`);
-            console.log('Chat history:', history);
-            return history ? JSON.parse(history) : [];
+            const key = redisKeys.embeddingCache(query);
+            const value = await this.redisClient.get(key);
+            console.log(value ? 'Embedding cache HIT' : 'Embedding cache MISS');
+            return value ? JSON.parse(value) : null;
         } catch (error) {
-            console.error('Chat history get error:', error.message);
-            return [];
+            console.error('Error getting embedding from cache:', error);
+            return null;
         }
     }
 
-    async addToChatHistory(sessionId, message) {
+    async setEmbedding(query, embedding, ttl = 86400) {
         try {
-            console.log('Adding to chat history:', message);
-            const history = await this.getChatHistory(sessionId);
-            history.push(message);
-            await this.client.set(`chat:${sessionId}`, JSON.stringify(history));
-            console.log('Chat history updated');
+            const key = redisKeys.embeddingCache(query);
+            await this.redisClient.set(key, JSON.stringify(embedding), 'EX', ttl);
+            console.log('Embedding cache set successfully');
         } catch (error) {
-            console.error('Chat history add error:', error.message);
+            console.error('Error setting embedding in cache:', error);
         }
+    }
+
+    async getGeminiCache(promptHash) {
+        try {
+            const key = redisKeys.geminiCache(promptHash);
+            const value = await this.redisClient.get(key);
+            console.log(value ? 'Gemini cache HIT' : 'Gemini cache MISS');
+            return value ? JSON.parse(value) : null;
+        } catch (error) {
+            console.error('Error getting Gemini response from cache:', error);
+            return null;
+        }
+    }
+
+    async setGeminiCache(promptHash, response, ttl = 86400) {
+        try {
+            const key = redisKeys.geminiCache(promptHash);
+            await this.redisClient.set(key, JSON.stringify(response), 'EX', ttl);
+            console.log('Gemini cache set successfully');
+        } catch (error) {
+            console.error('Error setting Gemini response in cache:', error);
+        }
+    }
+
+    async getCacheStats() {
+        // This method should now rely on redisClient's aggregated metrics
+        // The actual fetching of stats is done within redisClient.getCacheStats
+        return this.redisClient.getCacheStats();
     }
 }
 

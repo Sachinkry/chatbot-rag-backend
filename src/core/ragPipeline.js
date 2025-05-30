@@ -48,14 +48,11 @@ class RAGPipeline {
             // console.log('Cached response for query:', query);
 
             // Update chat history
-            await this.cacheService.addToChatHistory(sessionId, {
-                role: 'user',
-                content: query
-            });
-            await this.cacheService.addToChatHistory(sessionId, {
-                role: 'assistant',
-                content: response
-            });
+            const userMessage = { role: 'user', content: query };
+            await this.cacheService.addToChatHistory(sessionId, userMessage);
+            
+            const assistantMessage = { role: 'assistant', content: response };
+            await this.cacheService.addToChatHistory(sessionId, assistantMessage);
             // console.log('Updated chat history for session:', sessionId);
 
             return response;

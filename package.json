@@ -10,6 +10,9 @@
     "test:watch": "NODE_ENV=test jest --watch",
     "test:coverage": "NODE_ENV=test jest --coverage"
   },
+  "nodemonConfig": {
+    "signal": "SIGTERM"
+  },
   "keywords": [],
   "author": "",
   "license": "ISC",
